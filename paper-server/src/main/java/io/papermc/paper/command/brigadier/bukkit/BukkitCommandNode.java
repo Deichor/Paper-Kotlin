@@ -38,7 +38,14 @@ public class BukkitCommandNode extends LiteralCommandNode<CommandSourceStack> {
                 if (source instanceof net.minecraft.commands.CommandSourceStack commandSourceStack && commandSourceStack.source == CommandSource.NULL) {
                     return true;
                 } else {
-                    return command.testPermissionSilent(source.getSender());
+                    try {
+                        return command.testPermissionSilent(source.getSender());
+                    } catch (final LinkageError e) {
+                        // Plugin classloader (e.g. runtime-downloaded LiteCommands) can fail to resolve
+                        // package-private support classes on async command builder threads. Treat this
+                        // as "command is visible" — the real permission check still runs on execute.
+                        return true;
+                    }
                 }
             },
             null, null, false
